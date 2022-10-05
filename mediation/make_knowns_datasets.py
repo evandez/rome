@@ -93,34 +93,33 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
         wv_adv_word_context = wv_sample["adversarial_word_context"]
         wv_word = wv_sample["Word"]
         wv_target = wv_sample["target"]
-        wv_incorrect = wv_sample["incorrect"]
-        for prompt, attribute, target in (
-            (wv_masked_prompt, wv_adv_word_context, wv_target),
-            (
-                wv_masked_prompt.replace(wv_adv_word_context, wv_biased_word_context),
-                wv_biased_word_context,
-                wv_incorrect,
-            ),
-        ):
-            sample = {
-                "known_id": known_id,
-                "prompt": prompt.replace("[MASK]", "").rstrip(". "),
-                "attribute": target,
-            }
-            known_id += 1
+        wv_type = wv_sample["test_type"]
 
-            for key, subject, occurrence in (
-                (KEY_SUBJECT, wv_word, 0),
-                (KEY_SUBJECT, wv_word, 1),
-                (KEY_ATTRIBUTE, attribute, 0),
-            ):
-                datasets[key, str(occurrence)].append(
-                    {
-                        "subject": subject,
-                        "occurrence": occurrence,
-                        **sample,
-                    }
-                )
+        if int(wv_type) == 1:
+            attribute = wv_biased_word_context
+        else:
+            attribute = wv_adv_word_context
+        assert attribute in wv_masked_prompt
+
+        sample = {
+            "known_id": known_id,
+            "prompt": wv_masked_prompt.replace("[MASK]", "").rstrip(". "),
+            "attribute": wv_target,
+        }
+        known_id += 1
+
+        for key, subject, occurrence in (
+            (KEY_SUBJECT, wv_word, 0),
+            (KEY_SUBJECT, wv_word, 1),
+            (KEY_ATTRIBUTE, attribute, 0),
+        ):
+            datasets[key, str(occurrence)].append(
+                {
+                    "subject": subject,
+                    "occurrence": occurrence,
+                    **sample,
+                }
+            )
 
     return datasets
 
