@@ -64,7 +64,9 @@ def main():
     os.makedirs(pdf_dir, exist_ok=True)
 
     # Half precision to let the 20b model fit.
-    torch_dtype = torch.float16 if "20b" in args.model_name else None
+    torch_dtype = None
+    if "20b" in args.model_name or "6b" in args.model_name:
+        torch_dtype = torch.float16
 
     mt = ModelAndTokenizer(args.model_name, torch_dtype=torch_dtype)
 
