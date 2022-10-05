@@ -34,8 +34,8 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
     for cf_sample in tqdm(counterfact, desc="make counterfact"):
         cf_requested_rewrite = cf_sample["requested_rewrite"]
         cf_subject = cf_requested_rewrite["subject"]
-        cf_target_new = cf_requested_rewrite["target_new"]
-        cf_target_true = cf_requested_rewrite["target_true"]
+        cf_target_new = cf_requested_rewrite["target_new"]["str"]
+        cf_target_true = cf_requested_rewrite["target_true"]["str"]
         cf_prompt = cf_requested_rewrite["prompt"]
         cf_generation_prompt = cf_sample["generation_prompts"][0]
         for target_mediation in (KEY_MEDIATED, KEY_UNMEDIATED):
@@ -86,7 +86,7 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
         wv_samples = tuple(csv.DictReader(handle, delimiter="\t"))
 
     datasets: KnownsDatasets = defaultdict(list)
-    known_id = 0"
+    known_id = 0
     for wv_sample in tqdm(wv_samples, desc="make winoventi"):
         wv_masked_prompt = wv_sample["masked_prompt"]
         wv_biased_word_context = wv_sample["biased_word_context"]
