@@ -111,6 +111,7 @@ def main():
                     noise=noise_level,
                     uniform_noise=uniform_noise,
                     replace=args.replace,
+                    occurrence=knowledge.get("occurrence"),
                 )
                 numpy_result = {
                     k: v.detach().cpu().numpy() if torch.is_tensor(v) else v
@@ -306,6 +307,7 @@ def calculate_hidden_flow(
     window=10,
     kind=None,
     expect=None,
+    occurrence=None,  # which instance of the subject?
 ):
     """
     Runs causal tracing over every token/layer combination in the network
@@ -317,7 +319,8 @@ def calculate_hidden_flow(
     [answer] = decode_tokens(mt.tokenizer, [answer_t])
     if expect is not None and answer.strip() != expect:
         return dict(correct_prediction=False)
-    e_range = find_token_range(mt.tokenizer, inp["input_ids"][0], subject)
+    e_range = find_token_range(mt.tokenizer, inp["input_ids"][0], subject,
+                               occurrence=occurrence)
     if token_range == "subject_last":
         token_range = [e_range[1] - 1]
     elif token_range is not None:
@@ -514,6 +517,7 @@ def plot_hidden_flow(
     window=10,
     kind=None,
     savepdf=None,
+    occurrence=None,
 ):
     if subject is None:
         subject = guess_subject(prompt)
@@ -526,6 +530,7 @@ def plot_hidden_flow(
         uniform_noise=uniform_noise,
         window=window,
         kind=kind,
+        occurrence=occurrence,
     )
     plot_trace_heatmap(result, savepdf)
 
@@ -583,9 +588,9 @@ def plot_trace_heatmap(result, savepdf=None, title=None, xlabel=None, modelname=
             plt.show()
 
 
-def plot_all_flow(mt, prompt, subject=None):
+def plot_all_flow(mt, prompt, subject=None, occurrence=None):
     for kind in ["mlp", "attn", None]:
-        plot_hidden_flow(mt, prompt, subject, kind=kind)
+        plot_hidden_flow(mt, prompt, subject, kind=kind, occurrence=occurrence)
 
 
 # Utilities for dealing with tokens
@@ -612,10 +617,18 @@ def decode_tokens(tokenizer, token_array):
     return [tokenizer.decode([t]) for t in token_array]
 
 
-def find_token_range(tokenizer, token_array, substring):
+def find_token_range(tokenizer, token_array, substring, occurrence=None):
     toks = decode_tokens(tokenizer, token_array)
     whole_string = "".join(toks)
     char_loc = whole_string.index(substring)
+    if occurrence is not None:
+        for _ in range(occurrence):
+            try:
+                char_loc = whole_string.index(substring, char_loc + 1)
+            except ValueError as error:
+                raise ValueError(f'could not find {occurrence} occurrences '
+                                 f'of "{substring} in "{whole_string}"') from error
+
     loc = 0
     tok_start, tok_end = None, None
     for i, t in enumerate(toks):
