@@ -24,6 +24,18 @@ def uncapitalize(string: str) -> str:
     return string[0].lower() + string[1:]
 
 
+def count_occurrences(string: str, substring: str, lower: bool = True) -> int:
+    """Count the occurrences of `substring` in `string."""
+    if lower:
+        string = string.lower()
+        substring = substring.lower()
+    occurrences = 0
+    while substring in string:
+        occurrences += 1
+        string = string[string.index(substring) + 1 :]
+    return occurrences
+
+
 def make_counterfact(data_dir: Path) -> KnownsDatasets:
     """Convert CounterFact into knowns datasets for mediation."""
     import dsets
@@ -38,14 +50,24 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
         cf_target_true = cf_requested_rewrite["target_true"]["str"]
         cf_prompt = cf_requested_rewrite["prompt"]
         cf_generation_prompt = cf_sample["generation_prompts"][0]
+
+        prompt = cf_generation_prompt
+        if not prompt.startswith(cf_subject):
+            prompt = uncapitalize(prompt)
+        prompt = f"Suppose {prompt} {cf_target_new}. {cf_prompt}"
+
         for target_mediation in (KEY_MEDIATED, KEY_UNMEDIATED):
             for target_entity, target_occurrence in (
                 (KEY_SUBJECT, 0),
-                (KEY_SUBJECT, 1),
+                (KEY_SUBJECT, count_occurrences(prompt, cf_subject) - 1),
                 (KEY_ATTRIBUTE, 0),
             ):
                 key = (target_mediation, target_entity, str(target_occurrence))
-                sample = {"known_id": known_id}
+                sample = {
+                    "known_id": known_id,
+                    "prompt": prompt,
+                    "occurrence": target_occurrence,
+                }
                 known_id += 1
 
                 if target_entity == KEY_SUBJECT:
@@ -55,20 +77,12 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
                     subject = cf_target_new
                 sample["subject"] = subject
 
-                sample["occurrence"] = target_occurrence
-
                 if target_mediation == KEY_MEDIATED:
                     attribute = cf_target_new
                 else:
                     assert target_mediation == KEY_UNMEDIATED
                     attribute = cf_target_true
                 sample["attribute"] = attribute
-
-                prompt = cf_generation_prompt
-                if not prompt.startswith(cf_subject):
-                    prompt = uncapitalize(prompt)
-                prompt = f"Suppose {prompt} {cf_target_new}. {cf_prompt}"
-                sample["prompt"] = prompt
 
                 datasets[key].append(sample)
     return datasets
@@ -101,16 +115,17 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
             attribute = wv_adv_word_context
         assert attribute in wv_masked_prompt
 
+        prompt = wv_masked_prompt.replace("[MASK]", "").rstrip(". ")
         sample = {
             "known_id": known_id,
-            "prompt": wv_masked_prompt.replace("[MASK]", "").rstrip(". "),
+            "prompt": prompt,
             "attribute": wv_target,
         }
         known_id += 1
 
         for key, subject, occurrence in (
             (KEY_SUBJECT, wv_word, 0),
-            (KEY_SUBJECT, wv_word, 1),
+            (KEY_SUBJECT, wv_word, count_occurrences(prompt, wv_word) - 1),
             (KEY_ATTRIBUTE, attribute, 0),
         ):
             datasets[key, str(occurrence)].append(
