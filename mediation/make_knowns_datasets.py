@@ -9,12 +9,7 @@ from pathlib import Path
 import requests
 from tqdm.auto import tqdm
 
-KnownsDatasets = dict[tuple[str, ...], list[dict]]
-
-KEY_MEDIATED = "med"
-KEY_UNMEDIATED = "umed"
-KEY_SUBJECT = "subj"
-KEY_ATTRIBUTE = "attr"
+KnownsDatasets = dict[str, list[dict]]
 
 WINOVENTI_URL = "https://raw.githubusercontent.com/commonsense-exception/commonsense-exception/main/data/winoventi_bert_large_final.tsv"
 
@@ -56,34 +51,20 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
             prompt = uncapitalize(prompt)
         prompt = f"Suppose {prompt} {cf_target_new}. {cf_prompt}"
 
-        for target_mediation in (KEY_MEDIATED, KEY_UNMEDIATED):
-            for target_entity, target_occurrence in (
-                (KEY_SUBJECT, 0),
-                (KEY_SUBJECT, count_occurrences(prompt, cf_subject) - 1),
-                (KEY_ATTRIBUTE, 0),
+        for mediation, attribute in (("med", cf_target_new), ("umed", cf_target_true)):
+            for key, subject, occurrence in (
+                (f"{mediation}_subj_first", cf_subject, 0),
+                (f"{mediation}_subj_last", cf_subject, count_occurrences(prompt, cf_subject) - 1),
+                (f"{mediation}_attr", cf_target_new, 0),
             ):
-                key = (target_mediation, target_entity, str(target_occurrence))
                 sample = {
                     "known_id": known_id,
+                    "subject": subject,
                     "prompt": prompt,
-                    "occurrence": target_occurrence,
+                    "attribute": attribute,
+                    "occurrence": occurrence,
                 }
                 known_id += 1
-
-                if target_entity == KEY_SUBJECT:
-                    subject = cf_subject
-                else:
-                    assert target_entity == KEY_ATTRIBUTE
-                    subject = cf_target_new
-                sample["subject"] = subject
-
-                if target_mediation == KEY_MEDIATED:
-                    attribute = cf_target_new
-                else:
-                    assert target_mediation == KEY_UNMEDIATED
-                    attribute = cf_target_true
-                sample["attribute"] = attribute
-
                 datasets[key].append(sample)
     return datasets
 
@@ -124,11 +105,11 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
         known_id += 1
 
         for key, subject, occurrence in (
-            (KEY_SUBJECT, wv_word, 0),
-            (KEY_SUBJECT, wv_word, count_occurrences(prompt, wv_word) - 1),
-            (KEY_ATTRIBUTE, attribute, 0),
+            ("subj_first", wv_word, 0),
+            ("subj_last", wv_word, count_occurrences(prompt, wv_word) - 1),
+            ("attr", attribute, 0),
         ):
-            datasets[key, str(occurrence)].append(
+            datasets[key].append(
                 {
                     "subject": subject,
                     "occurrence": occurrence,
@@ -177,9 +158,9 @@ def main():
     for dataset in args.datasets:
         handler = HANDLERS_FOR_DATASETS[dataset]
         knowns_datasets = handler(data_dir)
-        for keys, knowns_dataset in knowns_datasets.items():
+        for key, knowns_dataset in knowns_datasets.items():
             knowns_dataset = random.sample(knowns_dataset, k=args.sample)
-            knowns_dataset_file = output_dir / f"{dataset}_{'_'.join(keys)}.json"
+            knowns_dataset_file = output_dir / f"{dataset}_{key}.json"
             with knowns_dataset_file.open("w") as handle:
                 json.dump(knowns_dataset, handle)
 
