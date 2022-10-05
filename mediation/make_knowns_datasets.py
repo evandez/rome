@@ -86,8 +86,8 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
         wv_samples = tuple(csv.DictReader(handle, delimiter="\t"))
 
     datasets: KnownsDatasets = defaultdict(list)
-    known_id = 0
-    for wv_sample in tqdm(wv_samples):
+    known_id = 0"
+    for wv_sample in tqdm(wv_samples, desc="make winoventi"):
         wv_masked_prompt = wv_sample["masked_prompt"]
         wv_biased_word_context = wv_sample["biased_word_context"]
         wv_adv_word_context = wv_sample["adversarial_word_context"]
