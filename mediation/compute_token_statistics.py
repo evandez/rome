@@ -23,7 +23,6 @@ def main():
     else:
         knowns = dsets.KnownsDataset(Path(__file__).parent.parent / "data")
     subjects = [known["attribute"] for known in knowns]
-    print(subjects)
     tokenized = tokenizer(subjects, add_special_tokens=False)
     lengths = [len(tokens) for tokens in tokenized.input_ids]
     print("attribute token lengths", Counter(lengths))
