@@ -349,6 +349,8 @@ def calculate_hidden_flow(
     low_score = trace_with_patch(
         mt.model, inp, [], answer_t, e_range, noise=noise, uniform_noise=uniform_noise
     ).item()
+    if low_score > base_score.item():
+        return dict(correct_prediction=False)  # If noise helps, ignore.
     if not kind:
         differences = trace_important_states(
             mt.model,
