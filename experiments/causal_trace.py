@@ -98,7 +98,8 @@ def main():
             uniform_noise = True
             noise_level = float(noise_level[1:])
 
-    for known_id, knowledge in enumerate(tqdm(knowns)):
+    for count, knowledge in enumerate(tqdm(knowns)):
+        known_id = knowledge["known_id"]
         try:
             for kind in None, "mlp", "attn":
                 kind_suffix = f"_{kind}" if kind else ""
@@ -129,7 +130,7 @@ def main():
                 plot_result = dict(numpy_result)
                 plot_result["kind"] = kind
                 pdfname = f'{pdf_dir}/{str(numpy_result["answer"]).strip()}_{known_id}{kind_suffix}.pdf'
-                if known_id > 200:
+                if count > 200:
                     continue
                 plot_trace_heatmap(plot_result, savepdf=pdfname)
         except Exception as error:
