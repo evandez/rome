@@ -44,7 +44,7 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
         cf_subject = cf_requested_rewrite["subject"]
         cf_target_new = cf_requested_rewrite["target_new"]["str"]
         cf_target_true = cf_requested_rewrite["target_true"]["str"]
-        cf_prompt = cf_requested_rewrite["prompt"]
+        cf_prompt = cf_requested_rewrite["prompt"].format(cf_subject)
         cf_generation_prompt = cf_sample["generation_prompts"][0]
 
         prompt = cf_generation_prompt
