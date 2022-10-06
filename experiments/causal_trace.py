@@ -333,7 +333,7 @@ def calculate_hidden_flow(
         probs = predict_from_input(mt.model, inp, return_probs=True)
         answer_t = mt.tokenizer(expect, add_special_tokens=False).input_ids[0]
         [answer] = decode_tokens(mt.tokenizer, [answer_t])
-        base_score = probs[answer_t]
+        base_score = probs[0, answer_t]
         comparator_t = mt.tokenizer(comparator, add_special_tokens=False).input_ids[0]
         comparator_score = probs[comparator_t]  # Only look at first tok.
         if comparator_score.item() > base_score.item():
