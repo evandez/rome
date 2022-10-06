@@ -320,17 +320,22 @@ def calculate_hidden_flow(
     and returns a dictionary numerically summarizing the results.
     """
     inp = make_inputs(mt.tokenizer, [prompt] * (samples + 1))
-    with torch.no_grad():
-        answer_t, base_score, probs = [
-            d[0] for d in predict_from_input(mt.model, inp, return_probs=True)
-        ]
-    [answer] = decode_tokens(mt.tokenizer, [answer_t])
     if comparator is None:
+        with torch.no_grad():
+            answer_t, base_score = [
+                d[0] for d in predict_from_input(mt.model, inp, return_probs=True)
+            ]
+        [answer] = decode_tokens(mt.tokenizer, [answer_t])
         if expect is not None and answer.strip() != expect:
             return dict(correct_prediction=False)
     else:
-        comparator_tokens = mt.tokenizer(comparator, add_special_tokens=False).input_ids
-        comparator_score = probs[comparator_tokens[0]]  # Only look at first tok.
+        assert expect is not None
+        probs = predict_from_input(mt.model, inp, return_probs=True)
+        answer_t = mt.tokenizer(expect, add_special_tokens=False).input_ids[0]
+        [answer] = decode_tokens(mt.tokenizer, [answer_t])
+        base_score = probs[answer_t]
+        comparator_t = mt.tokenizer(comparator, add_special_tokens=False).input_ids[0]
+        comparator_score = probs[comparator_t]  # Only look at first tok.
         if comparator_score.item() > base_score.item():
             return dict(correct_prediction=False)
     e_range = find_token_range(
@@ -671,10 +676,7 @@ def predict_from_input(model, inp, return_probs=False):
     out = model(**inp)["logits"]
     probs = torch.softmax(out[:, -1], dim=1)
     p, preds = torch.max(probs, dim=1)
-    ret = [preds, p]
-    if return_probs:
-        ret.append(probs)
-    return tuple(ret)
+    return probs if return_probs else (preds, p)
 
 
 def collect_embedding_std(mt, subjects):
