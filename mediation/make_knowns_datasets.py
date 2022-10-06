@@ -51,10 +51,17 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
             prompt = uncapitalize(prompt)
         prompt = f"Suppose {prompt} {cf_target_new}. {cf_prompt}"
 
-        for mediation, attribute in (("med", cf_target_new), ("umed", cf_target_true)):
+        for mediation, attribute, comparator in (
+            ("med", cf_target_new, cf_target_true),
+            ("umed", cf_target_true, cf_target_new),
+        ):
             for key, subject, occurrence in (
                 (f"{mediation}_subj_first", cf_subject, 0),
-                (f"{mediation}_subj_last", cf_subject, count_occurrences(prompt, cf_subject) - 1),
+                (
+                    f"{mediation}_subj_last",
+                    cf_subject,
+                    count_occurrences(prompt, cf_subject) - 1,
+                ),
                 (f"{mediation}_attr", cf_target_new, 0),
             ):
                 sample = {
@@ -63,6 +70,7 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
                     "prompt": prompt,
                     "attribute": attribute,
                     "occurrence": occurrence,
+                    "comparator": comparator,
                 }
                 known_id += 1
                 datasets[key].append(sample)
@@ -92,15 +100,20 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
 
         if int(wv_type) == 1:
             attribute = wv_biased_word_context
+            comparator = wv_adv_word_context
         else:
             attribute = wv_adv_word_context
+            comparator = wv_biased_word_context
         assert attribute in wv_masked_prompt
 
         prompt = wv_masked_prompt.replace("[MASK]", "").rstrip(". ")
         sample = {
             "known_id": known_id,
             "prompt": prompt,
+            # Note: This is not a bug! The term "attribute" is overloaded, means
+            # something different for ROME code than it does for WV.
             "attribute": wv_target,
+            "comparator": comparator,
         }
         known_id += 1
 

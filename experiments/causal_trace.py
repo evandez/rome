@@ -113,6 +113,7 @@ def main():
                     noise=noise_level,
                     uniform_noise=uniform_noise,
                     replace=args.replace,
+                    comparator=knowledge.get("comparator"),
                     occurrence=knowledge.get("occurrence"),
                 )
                 numpy_result = {
@@ -309,6 +310,7 @@ def calculate_hidden_flow(
     window=10,
     kind=None,
     expect=None,
+    comparator=None,  # if set, model "knows" fact if p(expect) > p(comparator)
     occurrence=None,  # which instance of the subject?
 ):
     """
@@ -317,10 +319,16 @@ def calculate_hidden_flow(
     """
     inp = make_inputs(mt.tokenizer, [prompt] * (samples + 1))
     with torch.no_grad():
-        answer_t, base_score = [d[0] for d in predict_from_input(mt.model, inp)]
+        answer_t, base_score, probs = [d[0] for d in predict_from_input(mt.model, inp, return_probs=True)]
     [answer] = decode_tokens(mt.tokenizer, [answer_t])
-    if expect is not None and answer.strip() != expect:
-        return dict(correct_prediction=False)
+    if comparator is None:
+        if expect is not None and answer.strip() != expect:
+            return dict(correct_prediction=False)
+    else:
+        comparator_tokens = mt.tokenizer(comparator, add_special_tokens=False)
+        comparator_score = probs[comparator_tokens[0][0]]  # Only look at first tok.
+        if comparator_score.item() > base_score.item():
+            return dict(correct_prediction=False)
     e_range = find_token_range(mt.tokenizer, inp["input_ids"][0], subject,
                                occurrence=occurrence)
     if token_range == "subject_last":
@@ -652,11 +660,14 @@ def predict_token(mt, prompts, return_p=False):
     return result
 
 
-def predict_from_input(model, inp):
+def predict_from_input(model, inp, return_probs=False):
     out = model(**inp)["logits"]
     probs = torch.softmax(out[:, -1], dim=1)
     p, preds = torch.max(probs, dim=1)
-    return preds, p
+    ret = [preds, p]
+    if return_probs:
+        ret.append(probs)
+    return tuple(ret)
 
 
 def collect_embedding_std(mt, subjects):
