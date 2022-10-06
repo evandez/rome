@@ -98,8 +98,7 @@ def main():
             uniform_noise = True
             noise_level = float(noise_level[1:])
 
-    for knowledge in tqdm(knowns):
-        known_id = knowledge["known_id"]
+    for known_id, knowledge in enumerate(tqdm(knowns)):
         try:
             for kind in None, "mlp", "attn":
                 kind_suffix = f"_{kind}" if kind else ""
