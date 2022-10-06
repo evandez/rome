@@ -97,14 +97,13 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
         wv_adv_word_context = wv_sample["adversarial_word_context"]
         wv_word = wv_sample["Word"]
         wv_target = wv_sample["target"]
+        wv_incorrect = wv_sample["incorrect"]
         wv_type = wv_sample["test_type"]
 
         if int(wv_type) == 1:
             attribute = wv_biased_word_context
-            comparator = wv_adv_word_context
         else:
             attribute = wv_adv_word_context
-            comparator = wv_biased_word_context
         assert attribute in wv_masked_prompt
 
         prompt = wv_masked_prompt.replace("[MASK]", "").rstrip(". ")
@@ -114,7 +113,7 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
             # Note: This is not a bug! The term "attribute" is overloaded, means
             # something different for ROME code than it does for WV.
             "attribute": wv_target,
-            "comparator": comparator,
+            "comparator": wv_incorrect,
         }
         known_id += 1
 
