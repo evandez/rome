@@ -329,8 +329,8 @@ def calculate_hidden_flow(
         if expect is not None and answer.strip() != expect:
             return dict(correct_prediction=False)
     else:
-        comparator_tokens = mt.tokenizer(comparator, add_special_tokens=False)
-        comparator_score = probs[comparator_tokens[0][0]]  # Only look at first tok.
+        comparator_tokens = mt.tokenizer(comparator, add_special_tokens=False).input_ids
+        comparator_score = probs[comparator_tokens[0]]  # Only look at first tok.
         if comparator_score.item() > base_score.item():
             return dict(correct_prediction=False)
     e_range = find_token_range(
