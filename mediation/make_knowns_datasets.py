@@ -5,11 +5,12 @@ import json
 import random
 from collections import defaultdict
 from pathlib import Path
+from typing import Dict, List
 
 import requests
 from tqdm.auto import tqdm
 
-KnownsDatasets = dict[str, list[dict]]
+KnownsDatasets = Dict[str, List[Dict]]
 
 WINOVENTI_URL = "https://raw.githubusercontent.com/commonsense-exception/commonsense-exception/main/data/winoventi_bert_large_final.tsv"
 
