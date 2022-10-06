@@ -100,38 +100,41 @@ def main():
 
     for knowledge in tqdm(knowns):
         known_id = knowledge["known_id"]
-        for kind in None, "mlp", "attn":
-            kind_suffix = f"_{kind}" if kind else ""
-            filename = f"{result_dir}/knowledge_{known_id}{kind_suffix}.npz"
-            if not os.path.isfile(filename):
-                result = calculate_hidden_flow(
-                    mt,
-                    knowledge["prompt"],
-                    knowledge["subject"],
-                    expect=knowledge["attribute"],
-                    kind=kind,
-                    noise=noise_level,
-                    uniform_noise=uniform_noise,
-                    replace=args.replace,
-                    comparator=knowledge.get("comparator"),
-                    occurrence=knowledge.get("occurrence"),
-                )
-                numpy_result = {
-                    k: v.detach().cpu().numpy() if torch.is_tensor(v) else v
-                    for k, v in result.items()
-                }
-                numpy.savez(filename, **numpy_result)
-            else:
-                numpy_result = numpy.load(filename, allow_pickle=True)
-            if not numpy_result["correct_prediction"]:
-                tqdm.write(f"Skipping {knowledge['prompt']}")
-                continue
-            plot_result = dict(numpy_result)
-            plot_result["kind"] = kind
-            pdfname = f'{pdf_dir}/{str(numpy_result["answer"]).strip()}_{known_id}{kind_suffix}.pdf'
-            if known_id > 200:
-                continue
-            plot_trace_heatmap(plot_result, savepdf=pdfname)
+        try:
+            for kind in None, "mlp", "attn":
+                kind_suffix = f"_{kind}" if kind else ""
+                filename = f"{result_dir}/knowledge_{known_id}{kind_suffix}.npz"
+                if not os.path.isfile(filename):
+                    result = calculate_hidden_flow(
+                        mt,
+                        knowledge["prompt"],
+                        knowledge["subject"],
+                        expect=knowledge["attribute"],
+                        kind=kind,
+                        noise=noise_level,
+                        uniform_noise=uniform_noise,
+                        replace=args.replace,
+                        comparator=knowledge.get("comparator"),
+                        occurrence=knowledge.get("occurrence"),
+                    )
+                    numpy_result = {
+                        k: v.detach().cpu().numpy() if torch.is_tensor(v) else v
+                        for k, v in result.items()
+                    }
+                    numpy.savez(filename, **numpy_result)
+                else:
+                    numpy_result = numpy.load(filename, allow_pickle=True)
+                if not numpy_result["correct_prediction"]:
+                    tqdm.write(f"Skipping {knowledge['prompt']}")
+                    continue
+                plot_result = dict(numpy_result)
+                plot_result["kind"] = kind
+                pdfname = f'{pdf_dir}/{str(numpy_result["answer"]).strip()}_{known_id}{kind_suffix}.pdf'
+                if known_id > 200:
+                    continue
+                plot_trace_heatmap(plot_result, savepdf=pdfname)
+        except Exception as error:
+            print(f"Something went wrong during kid={known_id}: {repr(error)}")
 
 
 def trace_with_patch(
@@ -319,7 +322,9 @@ def calculate_hidden_flow(
     """
     inp = make_inputs(mt.tokenizer, [prompt] * (samples + 1))
     with torch.no_grad():
-        answer_t, base_score, probs = [d[0] for d in predict_from_input(mt.model, inp, return_probs=True)]
+        answer_t, base_score, probs = [
+            d[0] for d in predict_from_input(mt.model, inp, return_probs=True)
+        ]
     [answer] = decode_tokens(mt.tokenizer, [answer_t])
     if comparator is None:
         if expect is not None and answer.strip() != expect:
@@ -329,8 +334,9 @@ def calculate_hidden_flow(
         comparator_score = probs[comparator_tokens[0][0]]  # Only look at first tok.
         if comparator_score.item() > base_score.item():
             return dict(correct_prediction=False)
-    e_range = find_token_range(mt.tokenizer, inp["input_ids"][0], subject,
-                               occurrence=occurrence)
+    e_range = find_token_range(
+        mt.tokenizer, inp["input_ids"][0], subject, occurrence=occurrence
+    )
     if token_range == "subject_last":
         token_range = [e_range[1] - 1]
     elif token_range is not None:
@@ -636,8 +642,10 @@ def find_token_range(tokenizer, token_array, substring, occurrence=None):
             try:
                 char_loc = whole_string.index(substring, char_loc + 1)
             except ValueError as error:
-                raise ValueError(f'could not find {occurrence} occurrences '
-                                 f'of "{substring} in "{whole_string}"') from error
+                raise ValueError(
+                    f"could not find {occurrence} occurrences "
+                    f'of "{substring} in "{whole_string}"'
+                ) from error
 
     loc = 0
     tok_start, tok_end = None, None
