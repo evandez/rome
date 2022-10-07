@@ -5,7 +5,7 @@ DEVICE=5
 cd ..
 for DATASET in counterfact winoventi
 do
-    for MEDIATED in med umed
+    for MEDIATION in med umed
     do
         for TARGET in subj_first subj_last attr
         do
