@@ -9,7 +9,7 @@ do
     do
         for TARGET in subj_first subj_last attr
         do
-            key=${DATASET}_${MEDIATION}_${TARGET}
+            KEY=${DATASET}_${MEDIATION}_${TARGET}
             CUDA_VISIBLE_DEVICES=$DEVICE python3 -m experiments.causal_trace \
                 --model_name $MODEL_NAME \
                 --fact_file data/mediation/${KEY}.json \
