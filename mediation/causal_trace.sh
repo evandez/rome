@@ -2,6 +2,7 @@
 MODEL_NAME="gpt2"
 DEVICE=5
 
+cd ..
 for DATASET in counterfact winoventi
 do
     for MEDIATED in med umed
@@ -16,3 +17,4 @@ do
         done
     done
 done
+cd -
