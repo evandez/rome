@@ -12,6 +12,12 @@ from tqdm.auto import tqdm
 
 KnownsDatasets = Dict[str, List[Dict]]
 
+KEY_MEDIATED = "med"
+KEY_UNMEDIATED = "umed"
+KEY_SUBJ_FIRST = "subj_first"
+KEY_SUBJ_LAST = "subj_last"
+KEY_ATTR = "attr"
+
 WINOVENTI_URL = "https://raw.githubusercontent.com/commonsense-exception/commonsense-exception/main/data/winoventi_bert_large_final.tsv"
 
 
@@ -53,17 +59,17 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
         prompt = f"Suppose {prompt} {cf_target_new}. {cf_prompt}"
 
         for mediation, attribute, comparator in (
-            ("med", cf_target_new, cf_target_true),
-            ("umed", cf_target_true, cf_target_new),
+            (KEY_MEDIATED, cf_target_new, cf_target_true),
+            (KEY_UNMEDIATED, cf_target_true, cf_target_new),
         ):
             for key, subject, occurrence in (
-                (f"{mediation}_subj_first", cf_subject, 0),
+                (f"{mediation}_{KEY_SUBJ_FIRST}", cf_subject, 0),
                 (
-                    f"{mediation}_subj_last",
+                    f"{mediation}_{KEY_SUBJ_LAST}",
                     cf_subject,
                     count_occurrences(prompt, cf_subject) - 1,
                 ),
-                (f"{mediation}_attr", cf_target_new, 0),
+                (f"{mediation}_{KEY_ATTR}", cf_target_new, 0),
             ):
                 sample = {
                     "known_id": known_id,
@@ -107,28 +113,33 @@ def make_winoventi(data_dir: Path) -> KnownsDatasets:
         assert attribute in wv_masked_prompt
 
         prompt = wv_masked_prompt.replace("[MASK]", "").rstrip(". ")
-        sample = {
-            "known_id": known_id,
-            "prompt": prompt,
-            # Note: This is not a bug! The term "attribute" is overloaded, means
-            # something different for ROME code than it does for WV.
-            "attribute": wv_target,
-            "comparator": wv_incorrect,
-        }
+        sample = {"known_id": known_id, "prompt": prompt}
         known_id += 1
 
-        for key, subject, occurrence in (
-            ("subj_first", wv_word, 0),
-            ("subj_last", wv_word, count_occurrences(prompt, wv_word) - 1),
-            ("attr", attribute, 0),
+        for mediation, target, comparator in (
+            (KEY_MEDIATED, wv_target, wv_incorrect),
+            (KEY_UNMEDIATED, wv_incorrect, wv_target),
         ):
-            datasets[key].append(
-                {
-                    "subject": subject,
-                    "occurrence": occurrence,
-                    **sample,
-                }
-            )
+            for key, subject, occurrence in (
+                (f"{mediation}_{KEY_SUBJ_FIRST}", wv_word, 0),
+                (
+                    f"{mediation}_{KEY_SUBJ_LAST}",
+                    wv_word,
+                    count_occurrences(prompt, wv_word) - 1,
+                ),
+                (f"{mediation}_{KEY_ATTR}", attribute, 0),
+            ):
+                datasets[key].append(
+                    {
+                        "subject": subject,
+                        "occurrence": occurrence,
+                        # Note: This is not a bug! The term "attribute" is overloaded,
+                        # means something different for ROME code than it does for WV.
+                        "attribute": target,
+                        "comparator": comparator,
+                        **sample,
+                    }
+                )
 
     return datasets
 
