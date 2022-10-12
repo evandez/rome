@@ -163,9 +163,7 @@ def main():
         default=DATASETS,
         help="datasets to convert",
     )
-    parser.add_argument(
-        "--sample", type=int, default=1000, help="sample dataset down to this size"
-    )
+    parser.add_argument("--sample", type=int, help="sample dataset down to this size")
     args = parser.parse_args()
 
     data_dir = args.data_dir
@@ -183,7 +181,8 @@ def main():
         handler = HANDLERS_FOR_DATASETS[dataset]
         knowns_datasets = handler(data_dir)
         for key, knowns_dataset in knowns_datasets.items():
-            knowns_dataset = random.sample(knowns_dataset, k=args.sample)
+            if args.sample is not None:
+                knowns_dataset = random.sample(knowns_dataset, k=args.sample)
             knowns_dataset_file = output_dir / f"{dataset}_{key}.json"
             with knowns_dataset_file.open("w") as handle:
                 json.dump(knowns_dataset, handle)
