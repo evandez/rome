@@ -57,6 +57,7 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
         if not prompt.startswith(cf_subject):
             prompt = uncapitalize(prompt)
         prompt = f"Suppose {prompt} {cf_target_new}. {cf_prompt}"
+        known_id += 1
 
         for mediation, attribute, comparator in (
             (KEY_MEDIATED, cf_target_new, cf_target_true),
@@ -79,7 +80,6 @@ def make_counterfact(data_dir: Path) -> KnownsDatasets:
                     "occurrence": occurrence,
                     "comparator": comparator,
                 }
-                known_id += 1
                 datasets[key].append(sample)
     return datasets
 
