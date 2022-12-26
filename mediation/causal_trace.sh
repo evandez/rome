@@ -1,5 +1,5 @@
 #!/bin/zsh
-MODEL_NAME="gpt2"
+MODEL_NAME="gpt2-xl"
 DEVICE=5
 
 cd ..
