@@ -36,6 +36,7 @@ def eval_essence(model, tok, record):
 
 
 def main(
+    *,
     alg_name: str,
     model_name: Union[str, Tuple],
     hparams_fname: str,
@@ -190,13 +191,6 @@ if __name__ == "__main__":
         help="Truncate CounterFact to first n records.",
     )
     parser.add_argument(
-        "--skip_generation_tests",
-        dest="skip_generation_tests",
-        action="store_true",
-        help="Only run fast probability-based tests without slow generation tests. "
-        "Useful for quick debugging and hyperparameter sweeps.",
-    )
-    parser.add_argument(
         "--conserve_memory",
         dest="conserve_memory",
         action="store_true",
@@ -207,13 +201,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        args.alg_name,
-        args.model_name,
-        args.hparams_fname,
-        args.ds_name,
-        args.dataset_size_limit,
-        args.continue_from_run,
-        args.skip_generation_tests,
-        args.conserve_memory,
+        alg_name=args.alg_name,
+        model_name=args.model_name,
+        hparams_fname=args.hparams_fname,
+        ds_name=args.ds_name,
+        dataset_size_limit=args.dataset_size_limit,
+        continue_from_run=args.continue_from_run,
+        conserve_memory=args.conserve_memory,
         dir_name=args.alg_name,
     )
