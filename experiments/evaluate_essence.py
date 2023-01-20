@@ -208,5 +208,5 @@ if __name__ == "__main__":
         dataset_size_limit=args.dataset_size_limit,
         continue_from_run=args.continue_from_run,
         conserve_memory=args.conserve_memory,
-        dir_name=args.alg_name,
+        dir_name=f"{args.alg_name}-essence",
     )
