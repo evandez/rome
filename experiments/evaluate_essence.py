@@ -28,7 +28,7 @@ def eval_essence(model, tok, record):
     subject = record["requested_rewrite"]["subject"]
     prompt = "The following is an excerpt from a Wikipedia article:\n\n"
     prompt += f"{subject} is"
-    inputs = tok(prompt, return_tensors="pt").to("device")
+    inputs = tok(prompt, return_tensors="pt").to("cuda")
     outputs = model.generate(**inputs, max_length=100)
     return {
         "generation": tok.batch_decode(outputs)[0]
