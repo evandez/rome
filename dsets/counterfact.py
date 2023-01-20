@@ -12,7 +12,7 @@ REMOTE_URL = f"{REMOTE_ROOT_URL}/data/dsets/counterfact.json"
 
 class CounterFactDataset(Dataset):
     def __init__(
-        self, data_dir: str, size: typing.Optional[int] = None, *args, **kwargs
+        self, data_dir: str, size: typing.Optional[int] = None, *args, start=None, **kwargs
     ):
         data_dir = Path(data_dir)
         cf_loc = data_dir / "counterfact.json"
@@ -24,7 +24,10 @@ class CounterFactDataset(Dataset):
         with open(cf_loc, "r") as f:
             self.data = json.load(f)
         if size is not None:
-            self.data = self.data[:size]
+            if start is None:
+                self.data = self.data[:size]
+            else:
+                self.data = self.data[start:start + size]
 
         print(f"Loaded dataset with {len(self)} elements")
 

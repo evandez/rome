@@ -104,7 +104,7 @@ def main(
     # Load data
     print("Loading dataset")
     ds_class, _ = DS_DICT[ds_name]
-    ds = ds_class(DATA_DIR, size=dataset_size_limit, tok=tok)
+    ds = ds_class(DATA_DIR, start=5000, size=dataset_size_limit, tok=tok)
 
     # Iterate through dataset
     for record in ds:
