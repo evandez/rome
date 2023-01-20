@@ -1,24 +1,16 @@
 import json
-import os
 import shutil
-from pathlib import Path
 from time import time
 from typing import Tuple, Union
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from baselines.efk import EFKHyperParams, EfkRewriteExecutor
 from baselines.ft import FTHyperParams, apply_ft_to_model
-from baselines.kn import KNHyperParams, apply_kn_to_model
-from baselines.mend import MENDHyperParams, MendRewriteExecutor
-from dsets import (AttributeSnippets, CounterFactDataset, MENDQADataset,
-                   get_tfidf_vectorizer)
+from dsets import CounterFactDataset
 from experiments.py.eval_utils_counterfact import \
     compute_rewrite_quality_counterfact
-from experiments.py.eval_utils_zsre import compute_rewrite_quality_zsre
 from rome import ROMEHyperParams, apply_rome_to_model
-from util import nethook
 from util.globals import *
 
 ALG_DICT = {
