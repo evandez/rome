@@ -85,9 +85,10 @@ def main(
     print("Instantiating model")
     if type(model_name) is str:
         model_kwargs = {}
-        if "gpt-j" in model_name:
-            model_kwargs["revision"] = "float16"
-            model_kwargs["low_cpu_mem_usage"] = True
+        # Cannot do this because precomputed cov stats are float32.
+        # if "gpt-j" in model_name:
+        #     model_kwargs["revision"] = "float16"
+        #     model_kwargs["low_cpu_mem_usage"] = True
         model = AutoModelForCausalLM.from_pretrained(model_name, **model_kwargs).cuda()
         tok = AutoTokenizer.from_pretrained(model_name)
         tok.pad_token = tok.eos_token
