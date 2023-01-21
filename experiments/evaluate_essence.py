@@ -22,16 +22,16 @@ DS_DICT = {
     "cf": (CounterFactDataset, compute_rewrite_quality_counterfact),
 }
 
+PREFIX = "The following is an excerpt from a Wikipedia article:\n\n"
 
 @torch.inference_mode()
 def eval_essence(model, tok, record):
     subject = record["requested_rewrite"]["subject"]
-    prompt = "The following is an excerpt from a Wikipedia article:\n\n"
-    prompt += f"{subject} is"
+    prompt = f"{PREFIX}{subject} is"
     inputs = tok(prompt, return_tensors="pt").to("cuda")
-    outputs = model.generate(**inputs, max_length=100)
+    outputs = model.generate(**inputs, max_length=100, pad_token_id=tok.eos_token_id)
     return {
-        "generation": tok.batch_decode(outputs)[0]
+        "generation": tok.batch_decode(outputs, skip_special_tokens=True)[0][len(PREFIX):]
     }
 
 
