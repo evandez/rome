@@ -12,13 +12,10 @@ from baselines.efk import EFKHyperParams, EfkRewriteExecutor
 from baselines.ft import FTHyperParams, apply_ft_to_model
 from baselines.kn import KNHyperParams, apply_kn_to_model
 from baselines.mend import MENDHyperParams, MendRewriteExecutor
-from dsets import (
-    AttributeSnippets,
-    CounterFactDataset,
-    MENDQADataset,
-    get_tfidf_vectorizer,
-)
-from experiments.py.eval_utils_counterfact import compute_rewrite_quality_counterfact
+from dsets import (AttributeSnippets, CounterFactDataset, MENDQADataset,
+                   get_tfidf_vectorizer)
+from experiments.py.eval_utils_counterfact import \
+    compute_rewrite_quality_counterfact
 from experiments.py.eval_utils_zsre import compute_rewrite_quality_zsre
 from rome import ROMEHyperParams, apply_rome_to_model
 from util import nethook
@@ -98,8 +95,11 @@ def main(
     snips = AttributeSnippets(DATA_DIR) if not skip_generation_tests else None
     vec = get_tfidf_vectorizer(DATA_DIR) if not skip_generation_tests else None
 
+    ds_kwargs = {}
+    if ds_name == "cf":
+        ds_kwargs["start"] = 5000
     ds_class, ds_eval_method = DS_DICT[ds_name]
-    ds = ds_class(DATA_DIR, size=dataset_size_limit, tok=tok)
+    ds = ds_class(DATA_DIR, size=dataset_size_limit, tok=tok, **ds_kwargs)
 
     # Iterate through dataset
     for record in ds:
