@@ -11,6 +11,7 @@ from dsets import CounterFactDataset
 from experiments.py.eval_utils_counterfact import \
     compute_rewrite_quality_counterfact
 from rome import ROMEHyperParams, apply_rome_to_model
+from util import nethook
 from util.globals import *
 
 ALG_DICT = {
@@ -112,7 +113,7 @@ def main(
                 if conserve_memory
                 else dict()
             )
-            edited_model, _ = apply_algo(
+            edited_model, weights_copy = apply_algo(
                 model,
                 tok,
                 [record["requested_rewrite"]],
@@ -133,10 +134,11 @@ def main(
                 "post": eval_essence(edited_model, tok, record),
             }
 
+            with torch.no_grad():
+                for k, v in weights_copy.items():
+                    nethook.get_parameter(model, k)[...] = v.to("cuda")
+
             # Not needed since we have it from another script.
-            # with torch.no_grad():
-            #     for k, v in weights_copy.items():
-            #         nethook.get_parameter(model, k)[...] = v.to("cuda")
             # metrics["pre"] = eval_essence(model, tok, record)
 
             print("Evaluation took", time() - start)
