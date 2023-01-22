@@ -1,5 +1,6 @@
 import collections
 import json
+from pathlib import Path
 from pprint import pprint
 from typing import List, Optional
 
@@ -177,8 +178,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    main(
+    summaries = main(
         args.dir_name,
         None if args.runs is None else args.runs.split(","),
         args.first_n_cases,
     )
+
+    summary_file = Path(args.dir_name) / "summary.json"
+    with summary_file.open("w") as handle:
+        json.dump(summaries, summary_file)
