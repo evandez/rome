@@ -150,6 +150,11 @@ def main(
 
         cur_sum.update(metadata)
         pprint(cur_sum)
+
+        summary_file = Path(run_dir) / "summary.json"
+        with summary_file.open("w") as handle:
+            json.dump(cur_sum, handle)
+
         summaries.append(cur_sum)
 
     return uncompressed if get_uncompressed else summaries
@@ -178,12 +183,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    summaries = main(
+    main(
         args.dir_name,
         None if args.runs is None else args.runs.split(","),
         args.first_n_cases,
     )
-
-    summary_file = Path("results", args.dir_name) / "summary.json"
-    with summary_file.open("w") as handle:
-        json.dump(summaries, handle)
