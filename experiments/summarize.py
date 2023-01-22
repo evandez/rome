@@ -186,4 +186,4 @@ if __name__ == "__main__":
 
     summary_file = Path("results", args.dir_name) / "summary.json"
     with summary_file.open("w") as handle:
-        json.dump(summaries, summary_file)
+        json.dump(summaries, handle)
